@@ -1,111 +1,79 @@
 const express = require('express');
-
-const Projects = require('./project-model.js');
-
+const Projects = require('./project-model');
 const router = express.Router();
 
-router.get('/', async (req, res) => {
-  try {
-    const projects = await Projects.find();
-    res.json(projects);
-  } catch (err) {
-    res.status(500).json({ message: 'Failed to get projects' });
-  }
-});
-
-router.get('/:id', async (req, res) => {
-  const { id } = req.params;
-
-  try {
-    const project = await Projects.findById(id);
-
-    if (project) {
-      res.json(project);
-    } else {
-      res.status(404).json({ message: 'Could not find project with given id.' })
+router.get('/projects', async (req, res) => {  
+    try {
+      const projects = await Projects.getProjects();
+      for(let i = 0; i < projects.length; i++){
+        if(projects[i].completed == 0){
+          projects[i].completed = false
+        } else if(projects[i].completed == 1){
+          projects[i].completed = true
+        }
+      }
+      res.status(200).json(projects);
+      console.log(projects)
+    } catch (err) {
+      res.status(500).json({ message: 'Could not retreive projects' });
     }
-  } catch (err) {
-    res.status(500).json({ message: 'Failed to get projects' });
-  }
-});
+  });
 
-router.get('/:id/tasks', async (req, res) => {
-  const { id } = req.params;
-
-  try {
-    const tasks = await Projects.findTasks(id);
-
-    if (tasks.length) {
-      res.json(tasks);
-    } else {
-      res.status(404).json({ message: 'Could not find tasks for given project' })
+router.post('/projects', async (req, res) => {
+    const projectData = req.body;
+    try {
+      const project = await Projects.addProject(projectData);
+      res.status(201).json(project);
+    } catch (err) {
+      res.status(500).json({ message: 'Could not add to projects' });
     }
-  } catch (err) {
-    res.status(500).json({ message: 'Failed to get tasks' });
-  }
-});
+  });
 
-router.post('/', async (req, res) => {
-  const projectData = req.body;
-
-  try {
-    const project = await Projects.add(projectData);
-    res.status(201).json(project);
-  } catch (err) {
-    res.status(500).json({ message: 'Failed to create new project' });
-  }
-});
-
-router.post('/:id/tasks', async (req, res) => {
-  const stepData = req.body;
-  const { id } = req.params; 
-
-  try {
-    const project = await Projects.findById(id);
-
-    if (project) {
-      const step = await Projects.addTask(stepData, id);
-      res.status(201).json(step);
-    } else {
-      res.status(404).json({ message: 'Could not find project with given id.' })
+router.get('/resources', async (req, res) => {
+    try {
+      const resources = await Projects.getResources();
+      res.status(200).json(resources);
+    } catch (err) {
+      res.status(500).json({ message: 'Could not retreive resources' });
     }
-  } catch (err) {
-    res.status(500).json({ message: 'Failed to create new step' });
-  }
-});
+  });
 
-router.put('/:id', async (req, res) => {
-  const { id } = req.params;
-  const changes = req.body;
-
-  try {
-    const project = await Projects.findById(id);
-
-    if (project) {
-      const updatedProject = await Projects.update(changes, id);
-      res.json(updatedProject);
-    } else {
-      res.status(404).json({ message: 'Could not find project with given id' });
+router.post('/resources', async (req, res) => {
+    const resourceData = req.body;
+    try {
+      const resource = await Projects.addResource(resourceData);
+      res.status(201).json(resource);
+    } catch (err) {
+      res.status(500).json({ message: 'Could not add to resources' });
     }
-  } catch (err) {
-    res.status(500).json({ message: 'Failed to update project' });
-  }
-});
+  });
 
-router.delete('/:id', async (req, res) => {
-  const { id } = req.params;
-
-  try {
-    const deleted = await Projects.remove(id);
-
-    if (deleted) {
-      res.json({ removed: deleted });
-    } else {
-      res.status(404).json({ message: 'Could not find project with given id' });
+router.get('/tasks', async (req, res) => {
+    try {
+      const tasks = await Projects.getTasks();
+      for(let i = 0; i < tasks.length; i++){
+        if(tasks[i].completed == 0){
+          tasks[i].completed = false
+        } else if(tasks[i].completed == 1){
+          tasks[i].completed = true
+        }
+      }
+      console.log(tasks)
+      res.status(200).json(tasks);
+    } catch (err) {
+      res.status(500).json({ message: 'Could not retreive tasks' });
     }
-  } catch (err) {
-    res.status(500).json({ message: 'Failed to delete project' });
-  }
-});
+  });
+
+router.post('/tasks', async (req, res) => {
+    const taskData = req.body;
+    try {
+      const task = await Projects.addTask(taskData);
+      res.status(201).json(task);
+    } catch (err) {
+      res.status(500).json({ message: 'Could not add to tasks' });
+    }
+  });
+
 
 module.exports = router;
